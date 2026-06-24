@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0b7a3b" />
+  <meta name="description" content="Fantacalcio Serie B: crea la tua lega con gli amici, inserisci i risultati di ogni giornata e segui la classifica. Funziona su iPhone e Android, installabile come app." />
+  <title>FantaSerie B — La tua lega fantacalcio</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FantaSerie B" />
+  <style>
+/* ===========================================================
+   FantaSerie B — stile mobile-first
+   =========================================================== */
+:root{
+  --green:#0b7a3b;
+  --green-dark:#075e2d;
+  --green-light:#e6f4ec;
+  --accent:#f4c430;
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --ink:#16221b;
+  --muted:#6b7a72;
+  --line:#e4e9e6;
+  --danger:#d23b3b;
+  --radius:16px;
+  --shadow:0 2px 10px rgba(16,40,28,.07);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:contain;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select{font-family:inherit;font-size:16px}
+
+/* ---------- Layout ---------- */
+#app{min-height:100dvh;display:flex;flex-direction:column}
+.app-header{
+  position:sticky;top:0;z-index:30;
+  background:linear-gradient(135deg,var(--green),var(--green-dark));
+  color:#fff;padding-top:var(--safe-top);
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+.app-header__inner{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand__logo{font-size:26px;line-height:1}
+.brand__title{font-weight:800;font-size:18px;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}
+.brand__sub{font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}
+.icon-btn{color:#fff;font-size:22px;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.15)}
+.icon-btn:active{background:rgba(255,255,255,.28)}
+
+.main{flex:1;padding:16px 16px calc(96px + var(--safe-bottom));max-width:680px;width:100%;margin:0 auto}
+
+/* ---------- Tab bar ---------- */
+.tabbar{
+  position:fixed;bottom:0;left:0;right:0;z-index:40;
+  display:flex;background:var(--card);
+  border-top:1px solid var(--line);
+  padding-bottom:var(--safe-bottom);
+  box-shadow:0 -2px 12px rgba(16,40,28,.06);
+}
+.tab{flex:1;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:11px;font-weight:600}
+.tab__ico{font-size:20px;filter:grayscale(.4) opacity(.8)}
+.tab.is-active{color:var(--green)}
+.tab.is-active .tab__ico{filter:none}
+
+/* ---------- Cards & generic ---------- */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:17px}
+.card .hint{color:var(--muted);font-size:13px;margin:0 0 12px;line-height:1.4}
+.section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:18px 4px 8px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--green);color:#fff;font-weight:700;font-size:15px;
+  padding:13px 18px;border-radius:12px;width:100%;transition:transform .05s, background .15s}
+.btn:active{transform:scale(.98)}
+.btn--ghost{background:var(--green-light);color:var(--green-dark)}
+.btn--line{background:#fff;color:var(--green-dark);border:1.5px solid var(--green)}
+.btn--danger{background:#fde9e9;color:var(--danger)}
+.btn--sm{width:auto;padding:9px 14px;font-size:13px;border-radius:10px}
+.btn-row{display:flex;gap:10px}
+.btn-row .btn{flex:1}
+
+label.field{display:block;margin-bottom:12px}
+label.field > span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input,.field select{
+  width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--green)}
+.inline{display:flex;gap:10px;align-items:flex-end}
+.inline .field{flex:1;margin-bottom:0}
+
+.empty{text-align:center;padding:34px 16px;color:var(--muted)}
+.empty .emo{font-size:42px;display:block;margin-bottom:10px}
+
+/* ---------- Manager list ---------- */
+.mgr{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.mgr:last-child{border-bottom:none}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;flex:none;font-size:16px}
+.mgr__info{flex:1;min-width:0}
+.mgr__name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mgr__team{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mgr__del{color:var(--danger);font-size:20px;width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
+
+/* ---------- Standings table ---------- */
+.standings{width:100%;border-collapse:collapse;font-size:13px}
+.standings th,.standings td{padding:9px 3px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+.standings th{font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:700;letter-spacing:.2px}
+.standings td.team,.standings th.team{text-align:left;padding-left:4px}
+.standings .pos{width:26px;font-weight:800;color:var(--muted)}
+.standings tr.top1 .pos{color:var(--accent)}
+.standings .pts{font-weight:800;color:var(--green-dark)}
+.standings .teamname{display:flex;align-items:center;gap:8px}
+.standings .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.legend{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+/* ---------- Calendar / matches ---------- */
+.round{margin-bottom:8px}
+.round__head{display:flex;align-items:center;justify-content:space-between;padding:6px 4px}
+.round__title{font-weight:800;font-size:15px}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--green-light);color:var(--green-dark)}
+.badge--open{background:#fff3d6;color:#9a6b00}
+.match{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.match:last-child{border-bottom:none}
+.match__side{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+.match__side.away{flex-direction:row-reverse;text-align:right}
+.match__name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.match__score{font-weight:800;font-size:15px;min-width:54px;text-align:center;color:var(--ink)}
+.match__score .fp{display:block;font-size:10px;color:var(--muted);font-weight:600}
+.match__vs{color:var(--muted);font-size:12px;min-width:54px;text-align:center}
+
+/* ---------- Results entry ---------- */
+.entry-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.entry-row:last-child{border-bottom:none}
+.entry-row .mgr__info{flex:1}
+.entry-row input{width:88px;text-align:center;padding:11px 8px;border:1.5px solid var(--line);border-radius:10px;font-weight:700;font-size:16px}
+.entry-row input:focus{outline:none;border-color:var(--green)}
+.preview{font-size:12px;color:var(--muted);min-width:34px;text-align:center}
+.giornata-switch{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.giornata-switch select{flex:1}
+.round-nav{display:flex;gap:8px}
+.round-nav button{width:44px;height:44px;border-radius:12px;background:var(--green-light);color:var(--green-dark);font-size:20px;font-weight:800;display:grid;place-items:center}
+
+/* ---------- Modal ---------- */
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,20,15,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal{background:#fff;width:100%;max-width:680px;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + var(--safe-bottom));max-height:88dvh;overflow:auto;animation:slideup .22s ease}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h3{margin:0 0 14px;font-size:18px}
+.modal__close{position:absolute}
+.share-code{width:100%;height:120px;border:1.5px solid var(--line);border-radius:12px;padding:12px;font-family:ui-monospace,monospace;font-size:12px;resize:none}
+
+/* ---------- Toast ---------- */
+.toast{position:fixed;left:50%;bottom:calc(86px + var(--safe-bottom));transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;z-index:80;
+  box-shadow:0 6px 20px rgba(0,0,0,.25);animation:pop .2s ease}
+@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ---------- Pills / chips ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font-size:13px;padding:8px 12px;border-radius:999px;background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.chip.is-on{background:var(--green);color:#fff;border-color:var(--green)}
+
+.kpis{display:flex;gap:10px;margin-bottom:14px}
+.kpi{flex:1;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 10px;text-align:center}
+.kpi__n{font-size:24px;font-weight:800;color:var(--green-dark)}
+.kpi__l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+
+.note{background:var(--green-light);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--green-dark);line-height:1.5;margin-bottom:14px}
+.install-cta{display:none;background:#fff;border:1.5px dashed var(--green);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--green-dark);line-height:1.5;margin-bottom:14px}
+.install-cta.show{display:block}
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-header__inner">
+        <div class="brand">
+          <span class="brand__logo" aria-hidden="true">⚽</span>
+          <div>
+            <div class="brand__title" id="leagueName">FantaSerie B</div>
+            <div class="brand__sub" id="leagueSub">La tua lega fantacalcio</div>
+          </div>
+        </div>
+        <button class="icon-btn" id="btnShare" title="Condividi / Salva" aria-label="Condividi lega">⇪</button>
+      </div>
+    </header>
+
+    <!-- Main views -->
+    <main id="main" class="main"></main>
+
+    <!-- Bottom navigation -->
+    <nav class="tabbar" id="tabbar">
+      <button class="tab" data-view="home"><span class="tab__ico">🏠</span><span>Lega</span></button>
+      <button class="tab" data-view="calendar"><span class="tab__ico">📅</span><span>Calendario</span></button>
+      <button class="tab" data-view="results"><span class="tab__ico">✏️</span><span>Risultati</span></button>
+      <button class="tab" data-view="standings"><span class="tab__ico">🏆</span><span>Classifica</span></button>
+      <button class="tab" data-view="settings"><span class="tab__ico">⚙️</span><span>Opzioni</span></button>
+    </nav>
+  </div>
+
+  <!-- Modal host -->
+  <div id="modalHost"></div>
+  <!-- Toast host -->
+  <div id="toast" class="toast" hidden></div>
+  <script>
+/* ===========================================================
+   FantaSerie B — dati di riferimento
+   Squadre di Serie B (modificabili dall'utente nelle Opzioni).
+   I colori servono solo come avatar/etichetta nelle liste.
+   =========================================================== */
+window.SERIE_B_TEAMS = [
+  { name: "Bari",        color: "#e2001a" },
+  { name: "Brescia",     color: "#0a3a8c" },
+  { name: "Carrarese",   color: "#fdd000" },
+  { name: "Catanzaro",   color: "#d50000" },
+  { name: "Cesena",      color: "#0a4f9c" },
+  { name: "Cittadella",  color: "#9c1c1c" },
+  { name: "Cosenza",     color: "#c8102e" },
+  { name: "Cremonese",   color: "#9a1b1b" },
+  { name: "Frosinone",   color: "#f2c200" },
+  { name: "Juve Stabia", color: "#ffd200" },
+  { name: "Mantova",     color: "#d2001a" },
+  { name: "Modena",      color: "#f4d000" },
+  { name: "Palermo",     color: "#e6007e" },
+  { name: "Pisa",        color: "#0a3d91" },
+  { name: "Reggiana",    color: "#a01818" },
+  { name: "Salernitana", color: "#7a0e1e" },
+  { name: "Sampdoria",   color: "#1b4f9c" },
+  { name: "Sassuolo",    color: "#0e7a3b" },
+  { name: "Spezia",      color: "#111111" },
+  { name: "Südtirol",    color: "#c8102e" }
+];
+
+  </script>
+  <script>
+/* ===========================================================
+   FantaSerie B — logica applicazione (vanilla JS, zero dipendenze)
+   Modello "lega tra amici": ogni giornata inserisci i fantapunti
+   di ogni allenatore, l'app calcola gol, scontri diretti e classifica.
+   Dati salvati sul dispositivo (localStorage) + export/import per
+   condividere la lega con gli amici.
+   =========================================================== */
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "fantaserieb_v1";
+  const PALETTE = ["#0b7a3b","#1b4f9c","#e2001a","#9a6b00","#7a0e1e",
+                   "#0e7a3b","#e6007e","#5b2c91","#0a8a8a","#c2410c",
+                   "#334155","#a01818"];
+
+  /* ---------------- Stato ---------------- */
+  let state = loadState();
+
+  function defaultState() {
+    return {
+      league: { name: "", soglia: 66, passo: 6, ritorno: true, bonusMigliore: false },
+      managers: [],
+      rounds: [],            // rounds[i].points = { managerId: number|null }
+      ui: { view: "home", round: 0 }
+    };
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      const s = JSON.parse(raw);
+      // merge difensivo con i default
+      const d = defaultState();
+      s.league = Object.assign(d.league, s.league || {});
+      s.managers = Array.isArray(s.managers) ? s.managers : [];
+      s.rounds = Array.isArray(s.rounds) ? s.rounds : [];
+      s.ui = Object.assign(d.ui, s.ui || {});
+      return s;
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  /* ---------------- Utility ---------------- */
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const uid = () => "m" + Math.random().toString(36).slice(2, 9);
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, c =>
+      ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+  }
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { t.hidden = true; }, 1900);
+  }
+  function initials(name) {
+    const p = String(name).trim().split(/\s+/);
+    return ((p[0]||"")[0]||"?").toUpperCase() + (p[1] ? p[1][0].toUpperCase() : "");
+  }
+
+  /* ---------------- Logica fantacalcio ---------------- */
+  // Fantapunti -> gol segnati
+  function goalsFromPoints(pts) {
+    if (pts == null || isNaN(pts)) return null;
+    const s = state.league.soglia, step = state.league.passo || 6;
+    if (pts < s) return 0;
+    return 1 + Math.floor((pts - s) / step);
+  }
+
+  // Calendario all'italiana (metodo del cerchio), con andata e ritorno
+  function buildSchedule() {
+    const ids = state.managers.map(m => m.id);
+    if (ids.length < 2) return [];
+    const arr = ids.slice();
+    if (arr.length % 2 !== 0) arr.push(null); // riposo
+    const n = arr.length, half = n / 2, totRounds = n - 1;
+    const andata = [];
+    let order = arr.slice();
+    for (let r = 0; r < totRounds; r++) {
+      const matches = [];
+      for (let i = 0; i < half; i++) {
+        const a = order[i], b = order[n - 1 - i];
+        if (a == null || b == null) continue;
+        // alterna casa/trasferta per equità
+        if (r % 2 === 0) matches.push({ home: a, away: b });
+        else matches.push({ home: b, away: a });
+      }
+      andata.push(matches);
+      // ruota mantenendo fisso il primo
+      order = [order[0]].concat([order[n - 1]]).concat(order.slice(1, n - 1));
+    }
+    if (!state.league.ritorno) return andata;
+    const ritorno = andata.map(rd => rd.map(m => ({ home: m.away, away: m.home })));
+    return andata.concat(ritorno);
+  }
+
+  // Allinea state.rounds alla lunghezza del calendario
+  function syncRounds() {
+    const sched = buildSchedule();
+    while (state.rounds.length < sched.length) state.rounds.push({ points: {} });
+    if (state.rounds.length > sched.length) state.rounds.length = sched.length;
+    if (state.ui.round >= sched.length) state.ui.round = Math.max(0, sched.length - 1);
+    return sched;
+  }
+
+  function pointsOf(roundIdx, mgrId) {
+    const r = state.rounds[roundIdx];
+    if (!r || r.points[mgrId] == null) return null;
+    return r.points[mgrId];
+  }
+
+  // Una giornata è "conclusa" se tutti gli scontri hanno entrambi i fantapunti
+  function roundComplete(roundIdx) {
+    const round = buildSchedule()[roundIdx];
+    if (!round || !round.length) return false;
+    return round.every(m => pointsOf(roundIdx, m.home) != null && pointsOf(roundIdx, m.away) != null);
+  }
+
+  // Miglior fantapunti della giornata (può essere ex aequo)
+  function bestScorersOfRound(roundIdx) {
+    let best = -Infinity, ids = [];
+    state.managers.forEach(m => {
+      const p = pointsOf(roundIdx, m.id);
+      if (p == null) return;
+      if (p > best) { best = p; ids = [m.id]; }
+      else if (p === best) ids.push(m.id);
+    });
+    return { pts: ids.length ? best : null, ids };
+  }
+  function isBestOfRound(roundIdx, mgrId) {
+    if (!roundComplete(roundIdx)) return false;
+    return bestScorersOfRound(roundIdx).ids.indexOf(mgrId) !== -1;
+  }
+
+  // Classifica
+  function computeStandings() {
+    const sched = buildSchedule();
+    const table = {};
+    state.managers.forEach(m => {
+      table[m.id] = { id: m.id, pt: 0, g: 0, v: 0, n: 0, p: 0, gf: 0, gs: 0, ft: 0, mvp: 0 };
+    });
+    sched.forEach((round, ri) => {
+      round.forEach(match => {
+        const ph = pointsOf(ri, match.home);
+        const pa = pointsOf(ri, match.away);
+        if (ph == null || pa == null) return;        // giornata non completa
+        const gh = goalsFromPoints(ph), ga = goalsFromPoints(pa);
+        const H = table[match.home], A = table[match.away];
+        if (!H || !A) return;
+        H.g++; A.g++;
+        H.gf += gh; H.gs += ga; A.gf += ga; A.gs += gh;
+        H.ft += ph; A.ft += pa;
+        if (gh > ga) { H.pt += 3; H.v++; A.p++; }
+        else if (gh < ga) { A.pt += 3; A.v++; H.p++; }
+        else { H.pt += 1; A.pt += 1; H.n++; A.n++; }
+      });
+      // Bonus +1 al miglior fantapunti della giornata (se attivo e giornata conclusa)
+      if (roundComplete(ri)) {
+        const best = bestScorersOfRound(ri);
+        best.ids.forEach(id => {
+          if (!table[id]) return;
+          table[id].mvp++;
+          if (state.league.bonusMigliore) table[id].pt += 1;
+        });
+      }
+    });
+    return Object.values(table).sort((a, b) =>
+      b.pt - a.pt ||
+      (b.gf - b.gs) - (a.gf - a.gs) ||
+      b.gf - a.gf ||
+      b.ft - a.ft ||
+      name(a.id).localeCompare(name(b.id))
+    );
+  }
+
+  function manager(id){ return state.managers.find(m => m.id === id); }
+  function name(id){ const m = manager(id); return m ? m.name : "—"; }
+  function color(id){ const m = manager(id); return m ? m.color : "#999"; }
+
+  /* ===========================================================
+     RENDER
+     =========================================================== */
+  function render() {
+    $("#leagueName").textContent = state.league.name || "FantaSerie B";
+    $("#leagueSub").textContent = state.league.name
+      ? `${state.managers.length} allenatori`
+      : "La tua lega fantacalcio";
+    document.querySelectorAll(".tab").forEach(t =>
+      t.classList.toggle("is-active", t.dataset.view === state.ui.view));
+    const v = state.ui.view;
+    const main = $("#main");
+    if (v === "home") main.innerHTML = viewHome();
+    else if (v === "calendar") main.innerHTML = viewCalendar();
+    else if (v === "results") main.innerHTML = viewResults();
+    else if (v === "standings") main.innerHTML = viewStandings();
+    else if (v === "settings") main.innerHTML = viewSettings();
+    main.scrollTop = 0;
+    window.scrollTo(0, 0);
+    bindView();
+  }
+
+  /* ---------- Vista: Lega / Home ---------- */
+  function viewHome() {
+    const hasLeague = !!state.league.name;
+    const mgrs = state.managers;
+    let html = "";
+
+    html += `<div class="install-cta" id="installCta">📲 <b>Aggiungi alla schermata Home</b> per usare FantaSerie B come un'app vera. <a href="#" id="installBtn">Installa ora</a></div>`;
+
+    if (!hasLeague) {
+      html += `<div class="card">
+        <h2>🏟️ Crea la tua lega</h2>
+        <p class="hint">Dai un nome alla lega e inizia ad aggiungere i tuoi amici. Funziona su iPhone e Android.</p>
+        <label class="field"><span>Nome della lega</span>
+          <input id="newLeagueName" type="text" placeholder="Es. Lega degli Amici 2025/26" /></label>
+        <button class="btn" id="createLeague">Crea lega ⚽</button>
+      </div>`;
+    } else {
+      const st = computeStandings();
+      const leader = st.length && st[0].g > 0 ? name(st[0].id) : "—";
+      const played = state.rounds.filter((r,i) => {
+        const sched = buildSchedule()[i] || [];
+        return sched.some(m => pointsOf(i,m.home)!=null && pointsOf(i,m.away)!=null);
+      }).length;
+      html += `<div class="kpis">
+        <div class="kpi"><div class="kpi__n">${mgrs.length}</div><div class="kpi__l">Allenatori</div></div>
+        <div class="kpi"><div class="kpi__n">${played}</div><div class="kpi__l">Giornate</div></div>
+        <div class="kpi"><div class="kpi__n">${esc(leader.length>7?initials(leader):leader)}</div><div class="kpi__l">In testa</div></div>
+      </div>`;
+    }
+
+    // lista allenatori
+    html += `<div class="card">
+      <h2>👥 Allenatori</h2>
+      <p class="hint">Aggiungi un giocatore per ogni amico della lega. Servono almeno 2 allenatori per generare il calendario.</p>
+      <div id="mgrList">${renderManagerList()}</div>
+      <div class="inline" style="margin-top:14px">
+        <label class="field"><span>Nome allenatore</span>
+          <input id="mgrName" type="text" placeholder="Es. Marco" /></label>
+        <label class="field" style="flex:1"><span>Squadra (opz.)</span>
+          <select id="mgrTeam"><option value="">— nessuna —</option>${
+            window.SERIE_B_TEAMS.map(t => `<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("")
+          }</select></label>
+      </div>
+      <button class="btn btn--ghost" id="addMgr">+ Aggiungi allenatore</button>
+    </div>`;
+
+    if (hasLeague && mgrs.length >= 2) {
+      html += `<div class="note">✅ Tutto pronto! Vai su <b>Risultati</b> dopo ogni giornata per inserire i fantapunti, poi guarda la <b>Classifica</b>.</div>`;
+    }
+    return html;
+  }
+
+  function renderManagerList() {
+    if (!state.managers.length)
+      return `<div class="empty"><span class="emo">🫥</span>Nessun allenatore. Aggiungine uno qui sotto.</div>`;
+    return state.managers.map(m => `
+      <div class="mgr">
+        <div class="avatar" style="background:${esc(m.color)}">${esc(initials(m.name))}</div>
+        <div class="mgr__info">
+          <div class="mgr__name">${esc(m.name)}</div>
+          <div class="mgr__team">${m.team ? "⚽ " + esc(m.team) : "Nessuna squadra"}</div>
+        </div>
+        <button class="mgr__del" data-del="${m.id}" aria-label="Rimuovi">🗑️</button>
+      </div>`).join("");
+  }
+
+  /* ---------- Vista: Calendario ---------- */
+  function viewCalendar() {
+    const sched = syncRounds();
+    if (sched.length === 0) {
+      return emptyCard("📅", "Calendario non disponibile",
+        "Aggiungi almeno 2 allenatori nella sezione Lega per generare il calendario di andata e ritorno.");
+    }
+    let html = `<div class="card"><h2>📅 Calendario</h2>
+      <p class="hint">Scontri diretti generati automaticamente. Tocca <b>Risultati</b> per inserire i fantapunti.</p></div>`;
+    sched.forEach((round, ri) => {
+      const complete = round.every(m => pointsOf(ri,m.home)!=null && pointsOf(ri,m.away)!=null);
+      const any = round.some(m => pointsOf(ri,m.home)!=null || pointsOf(ri,m.away)!=null);
+      html += `<div class="card round">
+        <div class="round__head">
+          <span class="round__title">Giornata ${ri+1}</span>
+          <span class="badge ${complete?"":"badge--open"}">${complete?"Conclusa":(any?"In corso":"Da giocare")}</span>
+        </div>`;
+      round.forEach(m => html += renderMatch(ri, m));
+      html += `</div>`;
+    });
+    return html;
+  }
+
+  function renderMatch(ri, m) {
+    const ph = pointsOf(ri, m.home), pa = pointsOf(ri, m.away);
+    const gh = goalsFromPoints(ph), ga = goalsFromPoints(pa);
+    const done = ph != null && pa != null;
+    const scoreMid = done
+      ? `<div class="match__score">${gh} - ${ga}<span class="fp">${ph} - ${pa}</span></div>`
+      : `<div class="match__vs">vs</div>`;
+    const starH = isBestOfRound(ri, m.home) ? " ⭐" : "";
+    const starA = isBestOfRound(ri, m.away) ? "⭐ " : "";
+    return `<div class="match">
+      <div class="match__side">
+        <span class="dot avatar" style="width:14px;height:14px;background:${esc(color(m.home))}"></span>
+        <span class="match__name">${esc(name(m.home))}${starH}</span>
+      </div>
+      ${scoreMid}
+      <div class="match__side away">
+        <span class="dot avatar" style="width:14px;height:14px;background:${esc(color(m.away))}"></span>
+        <span class="match__name">${starA}${esc(name(m.away))}</span>
+      </div>
+    </div>`;
+  }
+
+  /* ---------- Vista: Risultati (inserimento) ---------- */
+  function viewResults() {
+    const sched = syncRounds();
+    if (sched.length === 0) {
+      return emptyCard("✏️", "Niente da inserire",
+        "Servono almeno 2 allenatori. Vai nella sezione Lega per aggiungerli.");
+    }
+    const ri = state.ui.round;
+    const round = sched[ri];
+    let html = `<div class="card">
+      <div class="giornata-switch">
+        <div class="round-nav"><button id="rPrev">‹</button></div>
+        <select id="roundSel">${sched.map((_,i)=>`<option value="${i}" ${i===ri?"selected":""}>Giornata ${i+1}</option>`).join("")}</select>
+        <div class="round-nav"><button id="rNext">›</button></div>
+      </div>
+      <p class="hint">Inserisci i <b>fantapunti</b> di ogni allenatore presi dalla tua app/fonte ufficiale. L'app calcola i gol con la soglia ${state.league.soglia} (poi +1 gol ogni ${state.league.passo}).</p>
+      <div id="entryList">`;
+    state.managers.forEach(m => {
+      const val = pointsOf(ri, m.id);
+      const g = goalsFromPoints(val);
+      html += `<div class="entry-row">
+        <div class="avatar" style="background:${esc(m.color)}">${esc(initials(m.name))}</div>
+        <div class="mgr__info">
+          <div class="mgr__name">${esc(m.name)}</div>
+          <div class="mgr__team">${m.team?esc(m.team):"&nbsp;"}</div>
+        </div>
+        <span class="preview" data-prev="${m.id}">${g==null?"–":"⚽"+g}</span>
+        <input type="number" inputmode="decimal" step="0.5" placeholder="—"
+               data-pts="${m.id}" value="${val==null?"":val}" />
+      </div>`;
+    });
+    html += `</div>
+      <button class="btn" id="saveRound" style="margin-top:14px">💾 Salva giornata ${ri+1}</button>
+    </div>`;
+
+    // anteprima scontri di questa giornata
+    html += `<div class="card"><h2>⚔️ Scontri giornata ${ri+1}</h2>`;
+    round.forEach(m => html += renderMatch(ri, m));
+    html += `</div>`;
+    return html;
+  }
+
+  /* ---------- Vista: Classifica ---------- */
+  function viewStandings() {
+    if (state.managers.length < 2) {
+      return emptyCard("🏆", "Classifica vuota",
+        "Aggiungi gli allenatori e inserisci i risultati di almeno una giornata.");
+    }
+    const st = computeStandings();
+    const sched = buildSchedule();
+    const giocate = sched.filter((_, i) => roundComplete(i)).length;
+    const finita = sched.length > 0 && giocate === sched.length;
+    let rows = st.map((r, i) => `
+      <tr class="${i===0&&r.g>0?"top1":""}">
+        <td class="pos">${finita && i===0 ? "👑" : (i+1)}</td>
+        <td class="team"><div class="teamname">
+          <span class="dot" style="background:${esc(color(r.id))}"></span>
+          <span class="match__name">${esc(name(r.id))}</span>
+        </div></td>
+        <td class="pts">${r.pt}</td>
+        <td>${r.g}</td>
+        <td>${r.v}-${r.n}-${r.p}</td>
+        <td>${r.gf}:${r.gs}</td>
+        <td>${r.mvp ? "⭐"+r.mvp : "–"}</td>
+        <td>${r.ft.toFixed(1)}</td>
+      </tr>`).join("");
+    const champion = finita
+      ? `<div class="note" style="text-align:center">🏆 <b>${esc(name(st[0].id))}</b> vince la ${esc(state.league.name || "lega")}! Complimenti! 🎉</div>`
+      : "";
+    const bonusNote = state.league.bonusMigliore
+      ? " Bonus +1 al miglior punteggio di giornata attivo."
+      : "";
+    return `<div class="card">
+      ${champion}
+      <h2>🏆 Classifica</h2>
+      <p class="hint">3 punti a vittoria, 1 a pareggio. A parità contano differenza reti, gol fatti e fantapunti totali.${bonusNote}</p>
+      <table class="standings">
+        <thead><tr>
+          <th class="pos">#</th><th class="team">Allenatore</th><th>Pt</th>
+          <th>G</th><th>V-N-P</th><th>Gol</th><th>⭐</th><th>FantaΣ</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="legend">G = giornate giocate · V-N-P = vittorie-pareggi-sconfitte · Gol = fatti:subiti · ⭐ = volte miglior punteggio di giornata · FantaΣ = fantapunti totali</div>
+    </div>`;
+  }
+
+  /* ---------- Vista: Opzioni ---------- */
+  function viewSettings() {
+    const l = state.league;
+    return `<div class="card">
+      <h2>⚙️ Regole della lega</h2>
+      <p class="hint">Imposta come i fantapunti diventano gol. Valori classici: primo gol a 66, poi uno ogni 6.</p>
+      <label class="field"><span>Nome lega</span>
+        <input id="setName" type="text" value="${esc(l.name)}" placeholder="Nome lega" /></label>
+      <div class="inline">
+        <label class="field"><span>Soglia primo gol</span>
+          <input id="setSoglia" type="number" step="1" value="${l.soglia}" /></label>
+        <label class="field"><span>Punti per gol extra</span>
+          <input id="setPasso" type="number" step="1" value="${l.passo}" /></label>
+      </div>
+      <label class="field"><span>Formato</span>
+        <select id="setRitorno">
+          <option value="1" ${l.ritorno?"selected":""}>Andata e ritorno</option>
+          <option value="0" ${!l.ritorno?"selected":""}>Solo andata</option>
+        </select></label>
+      <label class="field"><span>Bonus miglior punteggio di giornata</span>
+        <select id="setBonus">
+          <option value="0" ${!l.bonusMigliore?"selected":""}>No</option>
+          <option value="1" ${l.bonusMigliore?"selected":""}>Sì, +1 punto in classifica</option>
+        </select></label>
+      <button class="btn" id="saveSettings">Salva regole</button>
+    </div>
+
+    <div class="card">
+      <h2>📤 Condividi con gli amici</h2>
+      <p class="hint">Esporta la lega e mandala agli amici (WhatsApp, ecc.). Loro possono importarla per avere gli stessi dati sul proprio telefono.</p>
+      <div class="btn-row">
+        <button class="btn btn--line" id="exportBtn">Esporta / Condividi</button>
+        <button class="btn btn--ghost" id="importBtn">Importa</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🧹 Gestione dati</h2>
+      <p class="hint">I dati sono salvati solo su questo dispositivo.</p>
+      <div class="btn-row">
+        <button class="btn btn--danger" id="resetRounds">Azzera risultati</button>
+        <button class="btn btn--danger" id="resetAll">Cancella tutto</button>
+      </div>
+    </div>`;
+  }
+
+  function emptyCard(emo, title, text) {
+    return `<div class="card"><div class="empty">
+      <span class="emo">${emo}</span>
+      <div style="font-weight:700;font-size:16px;color:var(--ink);margin-bottom:6px">${esc(title)}</div>
+      <div>${esc(text)}</div></div></div>`;
+  }
+
+  /* ===========================================================
+     BINDING eventi per vista
+     =========================================================== */
+  function bindView() {
+    const v = state.ui.view;
+    // CTA installazione
+    const cta = $("#installCta");
+    if (cta && deferredPrompt) cta.classList.add("show");
+    const installBtn = $("#installBtn");
+    if (installBtn) installBtn.onclick = (e) => { e.preventDefault(); doInstall(); };
+
+    if (v === "home") {
+      const create = $("#createLeague");
+      if (create) create.onclick = () => {
+        const nm = $("#newLeagueName").value.trim();
+        if (!nm) return toast("Inserisci un nome per la lega");
+        state.league.name = nm; save(); render(); toast("Lega creata! ⚽");
+      };
+      const addMgr = $("#addMgr");
+      if (addMgr) addMgr.onclick = addManager;
+      const nameInp = $("#mgrName");
+      if (nameInp) nameInp.onkeydown = (e) => { if (e.key === "Enter") addManager(); };
+      document.querySelectorAll("[data-del]").forEach(b =>
+        b.onclick = () => removeManager(b.dataset.del));
+    }
+
+    if (v === "results") {
+      const sel = $("#roundSel");
+      if (sel) sel.onchange = () => { state.ui.round = +sel.value; save(); render(); };
+      const prev = $("#rPrev"), next = $("#rNext");
+      const max = buildSchedule().length - 1;
+      if (prev) prev.onclick = () => { state.ui.round = Math.max(0, state.ui.round-1); save(); render(); };
+      if (next) next.onclick = () => { state.ui.round = Math.min(max, state.ui.round+1); save(); render(); };
+      document.querySelectorAll("[data-pts]").forEach(inp => {
+        inp.oninput = () => {
+          const prevEl = document.querySelector(`[data-prev="${inp.dataset.pts}"]`);
+          const val = inp.value === "" ? null : parseFloat(inp.value);
+          const g = goalsFromPoints(val);
+          if (prevEl) prevEl.textContent = g == null ? "–" : "⚽" + g;
+        };
+      });
+      const saveBtn = $("#saveRound");
+      if (saveBtn) saveBtn.onclick = saveRound;
+    }
+
+    if (v === "settings") {
+      const ss = $("#saveSettings");
+      if (ss) ss.onclick = () => {
+        state.league.name = $("#setName").value.trim() || state.league.name;
+        state.league.soglia = parseFloat($("#setSoglia").value) || 66;
+        state.league.passo = parseFloat($("#setPasso").value) || 6;
+        state.league.ritorno = $("#setRitorno").value === "1";
+        state.league.bonusMigliore = $("#setBonus").value === "1";
+        save(); render(); toast("Regole salvate ✅");
+      };
+      $("#exportBtn").onclick = exportLeague;
+      $("#importBtn").onclick = importLeague;
+      $("#resetRounds").onclick = () => {
+        if (confirm("Azzerare tutti i risultati inseriti? Gli allenatori restano.")) {
+          state.rounds = []; save(); render(); toast("Risultati azzerati");
+        }
+      };
+      $("#resetAll").onclick = () => {
+        if (confirm("Cancellare TUTTO (lega, allenatori, risultati)? Operazione irreversibile.")) {
+          state = defaultState(); save(); render(); toast("Tutto cancellato");
+        }
+      };
+    }
+  }
+
+  function addManager() {
+    const inp = $("#mgrName");
+    const nm = inp.value.trim();
+    if (!nm) return toast("Scrivi un nome");
+    const team = $("#mgrTeam").value;
+    const teamObj = window.SERIE_B_TEAMS.find(t => t.name === team);
+    const col = teamObj ? teamObj.color : PALETTE[state.managers.length % PALETTE.length];
+    state.managers.push({ id: uid(), name: nm, team: team, color: col });
+    save();
+    render();
+    setTimeout(() => { const i = $("#mgrName"); if (i) i.focus(); }, 30);
+    toast(nm + " aggiunto");
+  }
+
+  function removeManager(id) {
+    const m = manager(id);
+    if (!m) return;
+    if (!confirm(`Rimuovere ${m.name}? Verranno ricalcolati calendario e classifica.`)) return;
+    state.managers = state.managers.filter(x => x.id !== id);
+    state.rounds.forEach(r => { if (r.points) delete r.points[id]; });
+    state.rounds = []; // calendario cambia: ripartiamo dai risultati puliti
+    save(); render(); toast(m.name + " rimosso");
+  }
+
+  function saveRound() {
+    const ri = state.ui.round;
+    if (!state.rounds[ri]) state.rounds[ri] = { points: {} };
+    const pts = {};
+    document.querySelectorAll("[data-pts]").forEach(inp => {
+      const v = inp.value === "" ? null : parseFloat(inp.value);
+      pts[inp.dataset.pts] = (v == null || isNaN(v)) ? null : v;
+    });
+    state.rounds[ri].points = pts;
+    save(); render(); toast("Giornata " + (ri+1) + " salvata 💾");
+  }
+
+  /* ---------------- Export / Import ---------------- */
+  function exportLeague() {
+    const payload = JSON.stringify({
+      app: "FantaSerieB", v: 1,
+      league: state.league, managers: state.managers, rounds: state.rounds
+    });
+    const data = "FSB1:" + btoaUtf8(payload);
+    if (navigator.share) {
+      navigator.share({
+        title: "FantaSerie B — " + (state.league.name || "Lega"),
+        text: "Importa la nostra lega in FantaSerie B con questo codice:\n\n" + data
+      }).catch(()=>showShareModal(data));
+    } else {
+      showShareModal(data);
+    }
+  }
+
+  function showShareModal(data) {
+    openModal(`<h3>📤 Condividi la lega</h3>
+      <p class="hint">Copia questo codice e mandalo agli amici. Loro lo incollano in <b>Importa</b>.</p>
+      <textarea class="share-code" id="shareTa" readonly>${esc(data)}</textarea>
+      <button class="btn" id="copyShare" style="margin-top:12px">📋 Copia codice</button>
+      <button class="btn btn--ghost" id="closeModal" style="margin-top:10px">Chiudi</button>`);
+    $("#copyShare").onclick = () => {
+      const ta = $("#shareTa"); ta.select();
+      navigator.clipboard?.writeText(ta.value).then(()=>toast("Copiato ✅")).catch(()=>{
+        document.execCommand("copy"); toast("Copiato ✅");
+      });
+    };
+    $("#closeModal").onclick = closeModal;
+  }
+
+  function importLeague() {
+    openModal(`<h3>📥 Importa lega</h3>
+      <p class="hint">Incolla qui il codice ricevuto. ⚠️ Sostituirà la lega attuale su questo dispositivo.</p>
+      <textarea class="share-code" id="importTa" placeholder="Incolla il codice FSB1:..."></textarea>
+      <button class="btn" id="doImport" style="margin-top:12px">Importa</button>
+      <button class="btn btn--ghost" id="closeModal" style="margin-top:10px">Annulla</button>`);
+    $("#closeModal").onclick = closeModal;
+    $("#doImport").onclick = () => {
+      let raw = $("#importTa").value.trim();
+      try {
+        if (raw.startsWith("FSB1:")) raw = atobUtf8(raw.slice(5));
+        const obj = JSON.parse(raw);
+        if (!obj.league || !Array.isArray(obj.managers)) throw new Error("bad");
+        state.league = Object.assign(defaultState().league, obj.league);
+        state.managers = obj.managers;
+        state.rounds = Array.isArray(obj.rounds) ? obj.rounds : [];
+        state.ui.round = 0;
+        save(); closeModal(); render(); toast("Lega importata ✅");
+      } catch (e) {
+        toast("Codice non valido");
+      }
+    };
+  }
+
+  // base64 sicuro per UTF-8 (accenti, ü, ecc.)
+  function btoaUtf8(s){ return btoa(unescape(encodeURIComponent(s))); }
+  function atobUtf8(s){ return decodeURIComponent(escape(atob(s))); }
+
+  /* ---------------- Modal ---------------- */
+  function openModal(html) {
+    const host = $("#modalHost");
+    host.innerHTML = `<div class="modal-backdrop" id="mBackdrop"><div class="modal">${html}</div></div>`;
+    $("#mBackdrop").addEventListener("click", (e) => { if (e.target.id === "mBackdrop") closeModal(); });
+  }
+  function closeModal(){ $("#modalHost").innerHTML = ""; }
+
+  /* ===========================================================
+     PWA: installazione + service worker
+     =========================================================== */
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const cta = $("#installCta");
+    if (cta) cta.classList.add("show");
+  });
+  function doInstall() {
+    if (!deferredPrompt) { toast("Su iPhone: Condividi → «Aggiungi a Home»"); return; }
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(() => {
+      deferredPrompt = null;
+      const cta = $("#installCta"); if (cta) cta.classList.remove("show");
+    });
+  }
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(()=>{});
+    });
+  }
+
+  /* ===========================================================
+     Avvio
+     =========================================================== */
+  document.getElementById("tabbar").addEventListener("click", (e) => {
+    const tab = e.target.closest(".tab");
+    if (!tab) return;
+    state.ui.view = tab.dataset.view; save(); render();
+  });
+  document.getElementById("btnShare").addEventListener("click", exportLeague);
+
+  render();
+})();
+
+  </script>
+</body>
+</html>
